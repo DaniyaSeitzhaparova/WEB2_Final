@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMI Calculator</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
+        form { display: inline-block; text-align: left; }
+        input, button { display: block; margin: 10px auto; padding: 10px; }
+        button { background-color: blue; color: white; border: none; cursor: pointer; }
+        #result { margin-top: 20px; font-size: 20px; }
+    </style>
+</head>
+<body>
+    <h1>BMI Calculator</h1>
+    <form id="bmiForm">
+        <label>Weight (kg):</label>
+        <input type="number" id="weight" name="weight" step="0.1" required>
+        <label>Height (m):</label>
+        <input type="number" id="height" name="height" step="0.01" required>
+        <button type="submit">Calculate BMI</button>
+    </form>
+    <div id="result"></div>
+
+    <script>
+        document.getElementById("bmiForm").addEventListener("submit", async function(event) {
+            event.preventDefault();
+            
+            const weight = document.getElementById("weight").value;
+            const height = document.getElementById("height").value;
+            
+            const response = await fetch("/bmi/calculate-bmi", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ weight, height })
+            });
+
+            const data = await response.json();
+            const resultDiv = document.getElementById("result");
+            resultDiv.innerHTML = `<h2 style="color: ${data.color};">Your BMI is ${data.bmi.toFixed(2)} (${data.category})</h2>`;
+        });
+    </script>
+</body>
+</html>

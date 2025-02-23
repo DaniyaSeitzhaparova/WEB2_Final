@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <title>Weather Information</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; }
+        form { display: inline-block; text-align: left; }
+        input, button { display: block; margin: 10px auto; padding: 10px; }
+        button { background-color: blue; color: white; border: none; cursor: pointer; }
+        #result { margin-top: 20px; font-size: 20px; }
+        .flag { width: 50px; height: auto; }
+        .place-img { width: 300px; height: auto; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Weather API</h1>
+    <form id="weatherForm">
+        <label>Enter City:</label>
+        <input type="text" id="city" name="city" required>
+        <button type="submit">Get Weather</button>
+    </form>
+    <div id="result"></div>
+
+    <div id="map" style="height: 400px; width: 100%; margin-top: 20px;"></div>
+
+    <script>
+        let map; 
+    
+        document.getElementById("weatherForm").addEventListener("submit", async function(event) {
+            event.preventDefault();
+            
+            const city = document.getElementById("city").value;
+            
+            const response = await fetch(`/api/weather?city=${city}`);
+            const data = await response.json();
+    
+            const resultDiv = document.getElementById("result");
+            
+            if (data.error) {
+                resultDiv.innerHTML = `<h2 style="color: red;">Error: ${data.error}</h2>`;
+            } else {
+                resultDiv.innerHTML = `
+                    <h2>${data.city}, ${data.countryName} (${data.countryCode}) 
+                        <img class="flag" src="${data.countryFlag}" alt="Country Flag">
+                    </h2>
+                    <p><strong>Temperature:</strong> ${data.temp}°C (Feels like ${data.feels_like}°C)</p>
+                    <p><strong>Weather:</strong> ${data.description} <img src="https://openweathermap.org/img/wn/${data.icon}.png"></p>
+                    <p><strong>Humidity:</strong> ${data.humidity}%</p>
+                    <p><strong>Pressure:</strong> ${data.pressure} hPa</p>
+                    <p><strong>Wind Speed:</strong> ${data.windSpeed} m/s</p>
+                    <p><strong>Rain Volume:</strong> ${data.rainVolume} mm</p>
+                    <p><strong>Coordinates:</strong> Lat ${data.lat}, Lon ${data.lon}</p>
+                    <h3>Famous Place in ${data.countryName}:</h3>
+                    <p>${data.placeName}</p>
+                    <img class="place-img" src="${data.placePhoto}" alt="Landmark">
+                `;
+
+                if (!map) {
+                    map = L.map('map').setView([data.lat, data.lon], 10);
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '&copy; OpenStreetMap contributors'
+                    }).addTo(map);
+                } else {
+                    map.setView([data.lat, data.lon], 10);
+                }
+
+                
+                L.marker([data.lat, data.lon]).addTo(map)
+                    .bindPopup(`<b>${data.city}</b><br>Temperature: ${data.temp}°C`)
+                    .openPopup();
+            }
+        });
+    </script>
+</body>
+</html>
