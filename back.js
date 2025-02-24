@@ -8,9 +8,9 @@ import qr from 'qr-image';
 import nodemailer from 'nodemailer';
 import fetch from 'node-fetch';
 import dotenv from 'dotenv';
+import bmiRoutes from './routes/bmiRoutes.js';
 import cors from 'cors';
 import path from 'path';
-import bmiRoutes from './routes/bmiRoutes.js';
 
 dotenv.config();
 
@@ -18,23 +18,13 @@ const app = express();
 app.use(cors());
 const PORT = 3000;
 
-const userDB = mongoose.createConnection("mongodb://127.0.0.1:27017/userDB");
-
-const blogDB = mongoose.createConnection("mongodb://127.0.0.1:27017/blogsDB");
+mongoose.connect("mongodb://127.0.0.1:27017/userDB");
 
 const userSchema = new mongoose.Schema({
   username: String,
   password: String,
 });
-const User = userDB.model("User", userSchema);
-
-const blogSchema = new mongoose.Schema({
-  title: { type: String, required: true },
-  body: { type: String, required: true },
-  author: { type: String, default: "Anonymous" },
-  createdAt: { type: Date, default: Date.now }
-});
-const Blog = blogDB.model("Blog", blogSchema);
+const User = mongoose.model("User", userSchema);
 
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -47,7 +37,8 @@ app.use(
   })
 );
 
-const __dirname = path.resolve();
+
+const __dirname = path.resolve(); 
 
 const isAuthenticated = (req, res, next) => {
   if (req.session.user) {
@@ -80,7 +71,7 @@ app.post("/login", async (req, res) => {
     const user = await User.findOne({ username: req.body.username });
     if (user && (await bcrypt.compare(req.body.password, user.password))) {
       req.session.user = user;
-      res.sendFile(path.join(__dirname, "public", "dashboard.html"));
+      res.sendFile(path.join(__dirname, "public", "dashboard.html")); 
     } else {
       res.send("Invalid username or password.");
     }
@@ -171,6 +162,7 @@ app.get("/api/weather", async (req, res) => {
     }
 
     try {
+        // Fetch Weather Data
         const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${OPENWEATHER_API_KEY}&units=metric`;
         const weatherResponse = await fetch(weatherUrl);
         const weatherData = await weatherResponse.json();
@@ -182,6 +174,7 @@ app.get("/api/weather", async (req, res) => {
         const { coord, main, weather, wind, sys, rain } = weatherData;
         const countryCode = sys?.country;
 
+        // Fetch Country Details
         let countryFlag = "";
         let countryName = "Unknown";
         let fetchedCountryCode = countryCode;
@@ -200,9 +193,10 @@ app.get("/api/weather", async (req, res) => {
                 countryName = countryInfo?.name?.common || "Unknown";
                 fetchedCountryCode = countryInfo?.cca2 || countryCode;
 
+                // Extract Currency Information
                 const currencies = countryInfo?.currencies;
                 if (currencies) {
-                    const currencyKey = Object.keys(currencies)[0]; 
+                    const currencyKey = Object.keys(currencies)[0]; // Get first currency
                     if (currencyKey) {
                         currencyCode = currencyKey;
                         currencyName = currencies[currencyKey]?.name || "";
@@ -212,6 +206,7 @@ app.get("/api/weather", async (req, res) => {
             }
         }
 
+        // Fetch Place Photo from Pexels API
         let placePhoto = "";
         let placeName = "No famous place found";
 
@@ -228,6 +223,7 @@ app.get("/api/weather", async (req, res) => {
             }
         }
 
+        // Response JSON
         res.json({
             city: city,
             countryCode: fetchedCountryCode,
@@ -256,56 +252,6 @@ app.get("/api/weather", async (req, res) => {
         res.status(500).json({ error: "Failed to fetch data" });
     }
 });
-
-app.post("/blogs", async (req, res) => {
-  try {
-    const newBlog = new Blog(req.body);
-    await newBlog.save();
-    res.status(201).json(newBlog);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
-
-app.get("/blogs", async (req, res) => {
-  try {
-    const blogs = await Blog.find();
-    res.json(blogs);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to fetch blogs" });
-  }
-});
-
-app.get("/blogs/:id", async (req, res) => {
-  try {
-    const blog = await Blog.findById(req.params.id);
-    if (!blog) return res.status(404).json({ error: "Blog not found" });
-    res.json(blog);
-  } catch (error) {
-    res.status(500).json({ error: "Invalid blog ID" });
-  }
-});
-
-app.put("/blogs/:id", async (req, res) => {
-  try {
-    const updatedBlog = await Blog.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    if (!updatedBlog) return res.status(404).json({ error: "Blog not found" });
-    res.json(updatedBlog);
-  } catch (error) {
-    res.status(500).json({ error: "Failed to update blog" });
-  }
-});
-
-app.delete("/blogs/:id", async (req, res) => {
-  try {
-    const deletedBlog = await Blog.findByIdAndDelete(req.params.id);
-    if (!deletedBlog) return res.status(404).json({ error: "Blog not found" });
-    res.json({ message: "Blog deleted successfully" });
-  } catch (error) {
-    res.status(500).json({ error: "Failed to delete blog" });
-  }
-});
-
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);

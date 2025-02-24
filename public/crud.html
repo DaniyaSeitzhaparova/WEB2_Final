@@ -3,35 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Blog API</title>
+    <title>Blog Management</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
     <div class="container">
-        <h1>Simple Blog API</h1>
-        
-        <h2>Create a Blog Post</h2>
+        <h1>Blog Management System</h1>
+
+        <h2>Create a New Blog</h2>
         <input type="text" id="title" placeholder="Title">
         <input type="text" id="author" placeholder="Author">
-        <textarea id="body" placeholder="Body"></textarea>
+        <textarea id="body" placeholder="Content"></textarea>
         <button onclick="createBlog()">Create Blog</button>
 
-        <h2>Find Blog by ID</h2>
+        <h2>Find a Blog by ID</h2>
         <input type="text" id="searchId" placeholder="Enter Blog ID">
-        <button onclick="getBlogById()">Search Blog</button>
+        <button onclick="getBlogById()">Search</button>
         <div id="blogDetails"></div>
 
-        <h2>Update Blog Post</h2>
+        <h2>Update Blog</h2>
         <input type="text" id="updateId" placeholder="Blog ID">
-        <input type="text" id="updateTitle" placeholder="New Title">
-        <input type="text" id="updateAuthor" placeholder="New Author">
-        <textarea id="updateBody" placeholder="New Body"></textarea>
-        <button onclick="updateBlog()">Update Blog</button>
+        <input type="text" id="updateTitle" placeholder="Updated Title">
+        <input type="text" id="updateAuthor" placeholder="Updated Author">
+        <textarea id="updateBody" placeholder="Updated Content"></textarea>
+        <button onclick="updateBlog()">Update</button>
 
-        <h2>Delete Blog Post</h2>
+        <h2>Delete a Blog</h2>
         <input type="text" id="deleteId" placeholder="Blog ID">
-        <button onclick="deleteBlog()">Delete Blog</button>
+        <button onclick="deleteBlog()">Delete</button>
 
         <h2>All Blog Posts</h2>
         <button onclick="fetchBlogs()">Load Blogs</button>
@@ -39,18 +39,22 @@
     </div>
 
     <script>
-        const baseURL = 'http://localhost:5000/api/blogs';
+        const baseURL = 'http://localhost:3000/blogs';
 
         async function fetchBlogs() {
-            const response = await fetch(baseURL);
-            const blogs = await response.json();
-            const blogList = document.getElementById('blogList');
-            blogList.innerHTML = "";
-            blogs.forEach(blog => {
-                const li = document.createElement('li');
-                li.innerHTML = `<strong>${blog.title}</strong> by ${blog.author} (ID: ${blog._id})`;
-                blogList.appendChild(li);
-            });
+            try {
+                const response = await fetch(baseURL);
+                const blogs = await response.json();
+                const blogList = document.getElementById('blogList');
+                blogList.innerHTML = "";
+                blogs.forEach(blog => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<strong>${blog.title}</strong> by ${blog.author} (ID: ${blog._id})`;
+                    blogList.appendChild(li);
+                });
+            } catch (error) {
+                alert("Error fetching blogs.");
+            }
         }
 
         async function createBlog() {
@@ -58,37 +62,50 @@
             const author = document.getElementById('author').value;
             const body = document.getElementById('body').value;
 
-            const response = await fetch(baseURL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title, author, body })
-            });
+            if (!title || !author || !body) {
+                alert("All fields are required.");
+                return;
+            }
 
-            if (response.ok) {
-                alert("Blog created successfully!");
-                fetchBlogs(); 
-            } else {
-                alert("Failed to create blog.");
+            try {
+                const response = await fetch(baseURL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, author, body })
+                });
+
+                if (response.ok) {
+                    alert("Blog created successfully!");
+                    fetchBlogs();
+                } else {
+                    alert("Failed to create blog.");
+                }
+            } catch (error) {
+                alert("Error creating blog.");
             }
         }
 
         async function getBlogById() {
             const id = document.getElementById('searchId').value;
             if (!id) {
-                alert("Please enter a Blog ID!");
+                alert("Please enter a Blog ID.");
                 return;
             }
 
-            const response = await fetch(`${baseURL}/${id}`);
-            if (response.ok) {
-                const blog = await response.json();
-                document.getElementById('blogDetails').innerHTML = `
-                    <strong>Title:</strong> ${blog.title}<br>
-                    <strong>Author:</strong> ${blog.author}<br>
-                    <strong>Body:</strong> ${blog.body}
-                `;
-            } else {
-                alert("Blog not found!");
+            try {
+                const response = await fetch(`${baseURL}/${id}`);
+                if (response.ok) {
+                    const blog = await response.json();
+                    document.getElementById('blogDetails').innerHTML = `
+                        <strong>Title:</strong> ${blog.title}<br>
+                        <strong>Author:</strong> ${blog.author}<br>
+                        <strong>Content:</strong> ${blog.body}
+                    `;
+                } else {
+                    alert("Blog not found.");
+                }
+            } catch (error) {
+                alert("Error fetching blog.");
             }
         }
 
@@ -99,40 +116,48 @@
             const body = document.getElementById('updateBody').value;
 
             if (!id || !title || !author || !body) {
-                alert("Please fill in all fields!");
+                alert("All fields are required.");
                 return;
             }
 
-            const response = await fetch(`${baseURL}/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title, author, body })
-            });
+            try {
+                const response = await fetch(`${baseURL}/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, author, body })
+                });
 
-            if (response.ok) {
-                alert("Blog updated successfully!");
-                fetchBlogs();
-            } else {
-                alert("Failed to update blog.");
+                if (response.ok) {
+                    alert("Blog updated successfully!");
+                    fetchBlogs();
+                } else {
+                    alert("Failed to update blog.");
+                }
+            } catch (error) {
+                alert("Error updating blog.");
             }
         }
 
         async function deleteBlog() {
             const id = document.getElementById('deleteId').value;
             if (!id) {
-                alert("Please enter a Blog ID!");
+                alert("Please enter a Blog ID.");
                 return;
             }
 
-            const response = await fetch(`${baseURL}/${id}`, {
-                method: 'DELETE'
-            });
+            try {
+                const response = await fetch(`${baseURL}/${id}`, {
+                    method: 'DELETE'
+                });
 
-            if (response.ok) {
-                alert("Blog deleted successfully!");
-                fetchBlogs();
-            } else {
-                alert("Failed to delete blog.");
+                if (response.ok) {
+                    alert("Blog deleted successfully!");
+                    fetchBlogs();
+                } else {
+                    alert("Failed to delete blog.");
+                }
+            } catch (error) {
+                alert("Error deleting blog.");
             }
         }
     </script>
