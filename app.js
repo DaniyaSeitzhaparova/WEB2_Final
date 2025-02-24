@@ -126,7 +126,7 @@ const transporter = nodemailer.createTransport({
   secure: false,
   auth: {
     user: '231502@astanait.edu.kz',
-    pass: ' cx7ypj3pDlVYr', 
+    pass: '', 
   },
 });
 
