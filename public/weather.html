@@ -55,9 +55,9 @@
                     <p><strong>Pressure:</strong> ${data.pressure} hPa</p>
                     <p><strong>Wind Speed:</strong> ${data.windSpeed} m/s</p>
                     <p><strong>Rain Volume:</strong> ${data.rainVolume} mm</p>
+                    <p><strong>Air Quality:</strong> ${data.airQuality}</p>
                     <p><strong>Coordinates:</strong> Lat ${data.lat}, Lon ${data.lon}</p>
                     
-                    <!-- New Currency Section -->
                     <h3>Currency of ${data.countryName}:</h3>
                     <p class="currency"><strong>${data.currency.name} (${data.currency.code})</strong> - ${data.currency.symbol}</p>
 
@@ -76,7 +76,7 @@
                 }
 
                 L.marker([data.lat, data.lon]).addTo(map)
-                    .bindPopup(`<b>${data.city}</b><br>Temperature: ${data.temp}°C`)
+                    .bindPopup(`<b>${data.city}</b><br>Temperature: ${data.temp}°C<br>Air Quality: ${data.airQuality}`)
                     .openPopup();
             }
         });

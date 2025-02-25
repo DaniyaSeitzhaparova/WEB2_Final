@@ -160,7 +160,7 @@ app.post('/send-email', async (req, res) => {
 
 app.use('/bmi', bmiRoutes);
 
-const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY;
+const OPENWEATHER_API_KEY = process.env.OPENWEATHER_API_KEY; 
 const REST_COUNTRIES_API = "https://restcountries.com/v3.1";
 const PEXELS_API_KEY = process.env.PEXELS_API_KEY;
 
@@ -228,6 +228,16 @@ app.get("/api/weather", async (req, res) => {
             }
         }
 
+        const airQualityUrl = `https://api.openweathermap.org/data/2.5/air_pollution?lat=${coord.lat}&lon=${coord.lon}&appid=${OPENWEATHER_API_KEY}`;
+        const airQualityResponse = await fetch(airQualityUrl);
+        const airQualityData = await airQualityResponse.json();
+
+        let airQuality = "Unknown";
+        if (airQualityData.list && airQualityData.list.length > 0) {
+            const aqi = airQualityData.list[0].main.aqi;
+            airQuality = ["Good", "Fair", "Moderate", "Poor", "Very Poor"][aqi - 1] || "Unknown";
+        }
+
         res.json({
             city: city,
             countryCode: fetchedCountryCode,
@@ -249,13 +259,15 @@ app.get("/api/weather", async (req, res) => {
                 symbol: currencySymbol,
             },
             placePhoto: placePhoto,
-            placeName: placeName
+            placeName: placeName,
+            airQuality: airQuality
         });
     } catch (error) {
         console.error("Error fetching data:", error);
         res.status(500).json({ error: "Failed to fetch data" });
     }
 });
+
 
 app.post("/blogs", async (req, res) => {
   try {
